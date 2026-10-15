@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 360px;
+      box-sizing: border-box;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+      text-align: center;
+      font-size: 20px;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    button:hover {
+      background: #1557b0;
+    }
+    button:disabled {
+      background: #9aa0a6;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      color: #d93025;
+      margin-top: 15px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      color: #666;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Access Verification</h2>
+    
+    <form id="verifyForm" onsubmit="event.preventDefault(); verifyUser();">
+      <div class="input-group">
+        <label for="userName">User's Name</label>
+        <input type="text" id="userName" name="userName" placeholder="Enter your name" required>
+      </div>
+      <div class="input-group">
+        <label for="enrollmentNumber">Enrollment Number</label>
+        <input type="text" id="enrollmentNumber" name="enrollmentNumber" placeholder="Enter your id" required>
+      </div>
+      <button type="submit" id="submitBtn">Verify</button>
+    </form>
+
+    <div id="loading" class="loading">Verifying credentials...</div>
+    <div id="errorMsg" class="error-msg"></div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_ZfZfXJjx-th9ykgt3BLncO6j3ImhorcLkiZZooK_QerlmMY9yMsYxZHdj37f4hZx_w/exec";
+
+    // Callback global para procesar la respuesta mediante JSONP
+    window.handleResponse = function(data) {
+      const errorDiv = document.getElementById("errorMsg");
+      const loadingDiv = document.getElementById("loading");
+      const btn = document.getElementById("submitBtn");
+
+      // Limpiar el tag de script temporal
+      const oldScript = document.getElementById("jsonpScript");
+      if (oldScript) oldScript.remove();
+
+      if (data.success) {
+        // Redirección inmediata a Google Calendar
+        window.location.href = data.redirectUrl;
+      } else {
+        btn.disabled = false;
+        loadingDiv.style.display = "none";
+        errorDiv.innerText = data.message || "Invalid User's Name or Enrollment Number.";
+      }
+    };
+
+    function verifyUser() {
+      const name = document.getElementById("userName").value.trim();
+      const enrollment = document.getElementById("enrollmentNumber").value.trim();
+      const errorDiv = document.getElementById("errorMsg");
+      const loadingDiv = document.getElementById("loading");
+      const btn = document.getElementById("submitBtn");
+
+      errorDiv.innerText = "";
+
+      if (!name || !enrollment) {
+        errorDiv.innerText = "Please fill in all fields.";
+        return;
+      }
+
+      btn.disabled = true;
+      loadingDiv.style.display = "block";
+
+      // Limpiar scripts anteriores si existen
+      const oldScript = document.getElementById("jsonpScript");
+      if (oldScript) oldScript.remove();
+
+      // Petición asíncrona mediante inyección de script (JSONP)
+      const script = document.createElement("script");
+      script.id = "jsonpScript";
+      script.src = `${SCRIPT_URL}?userName=${encodeURIComponent(name)}&enrollmentNumber=${encodeURIComponent(enrollment)}&callback=handleResponse`;
+      
+      script.onerror = function() {
+        btn.disabled = false;
+        loadingDiv.style.display = "none";
+        errorDiv.innerText = "Error connecting to verification server.";
+      };
+
+      document.body.appendChild(script);
+    }
+  </script>
+
+</body>
+</html>
