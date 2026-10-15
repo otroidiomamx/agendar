@@ -93,7 +93,7 @@
 <body>
 
   <div class="card">
-    2>Access Verification</h2>
+    <h2>Access Verification</h2>
     
     <form id="verifyForm" onsubmit="event.preventDefault(); processVerification();">
       <div class="input-group">
@@ -107,7 +107,7 @@
       <button type="submit" id="submitBtn">Verify</button>
     </form>
 
-    <div id="statusMsg" class="status-msg">Redirecting to Google Calendar</div>
+    <div id="statusMsg" class="status-msg">Verifying credentials</div>
     <div id="errorMsg" class="error-msg"></div>
   </div>
 
@@ -124,6 +124,7 @@
 
       if (data.success) {
         statusDiv.innerText = "Redirecting to Google Calendar";
+        // Redirección directa para GitHub Pages
         window.location.href = data.redirectUrl;
       } else {
         btn.disabled = false;
@@ -149,30 +150,17 @@
 
       const script = document.createElement("script");
       script.id = "jsonpScript";
-      script.src = `${SCRIPT_URL}?userName=${encodeURIComponent(name)}
-  
-     
-     
-     
-    
-    
+      script.src = `${SCRIPT_URL}?userName=${encodeURIComponent(name)}&enrollmentNumber=${encodeURIComponent(enrollment)}&callback=handleResponse`;
 
-    
- 
-     
-       
-     
-     
-    
-   
+      script.onerror = function() {
+        btn.disabled = false;
+        statusDiv.style.display = "none";
+        errorDiv.innerText = "Error connecting to server. Please try again.";
+      };
 
-     
+      document.body.appendChild(script);
+    }
+  </script>
 
-      
-     
-   
-  
- 
-
-     
-
+</body>
+</html>
