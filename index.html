@@ -17,36 +17,43 @@
       box-sizing: border-box;
     }
     .card {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       width: 100%;
       max-width: 360px;
       box-sizing: border-box;
     }
     h2 {
       margin-top: 0;
-      color: #333;
+      color: #333333;
       text-align: center;
       font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
     }
     .input-group {
       margin-bottom: 15px;
     }
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #555;
+      margin-bottom: 6px;
+      color: #555555;
       font-size: 14px;
     }
     input {
       width: 100%;
       padding: 10px;
       box-sizing: border-box;
-      border: 1px solid #ccc;
+      border: 1px solid #cccccc;
       border-radius: 5px;
       font-size: 14px;
+      background-color: #ffffff;
+    }
+    input:focus {
+      border-color: #1a73e8;
+      outline: none;
     }
     button {
       width: 100%;
@@ -58,9 +65,28 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 15px;
+      margin-top: 5px;
     }
     button:hover {
       background: #1557b0;
+    }
+    button:disabled {
+      background: #9aa0a6;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      color: #d93025;
+      margin-top: 15px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .status-msg {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      color: #1a73e8;
+      font-size: 14px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -69,7 +95,7 @@
   <div class="card">
     <h2>Access Verification</h2>
     
-    <form action="https://script.google.com/macros/s/AKfycbx_ZfZfXJjx-th9ykgt3BLncO6j3ImhorcLkiZZooK_QerlmMY9yMsYxZHdj37f4hZx_w/exec" method="POST" target="_top">
+    <form id="verifyForm" onsubmit="event.preventDefault(); processVerification();">
       <div class="input-group">
         <label for="userName">User's Name</label>
         <input type="text" id="userName" name="userName" placeholder="Enter your name" required>
@@ -78,13 +104,67 @@
         <label for="enrollmentNumber">Enrollment Number</label>
         <input type="text" id="enrollmentNumber" name="enrollmentNumber" placeholder="Enter your id" required>
       </div>
-      <button type="submit">Verify</button>
+      <button type="submit" id="submitBtn">Verify</button>
     </form>
+
+    <div id="statusMsg" class="status-msg">Redirecting to Google Calendar</div>
+    <div id="errorMsg" class="error-msg"></div>
   </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_ZfZfXJjx-th9ykgt3BLncO6j3ImhorcLkiZZooK_QerlmMY9yMsYxZHdj37f4hZx_w/exec";
+
+    window.handleResponse = function(data) {
+      const errorDiv = document.getElementById("errorMsg");
+      const statusDiv = document.getElementById("statusMsg");
+      const btn = document.getElementById("submitBtn");
+
+      const oldScript = document.getElementById("jsonpScript");
+      if (oldScript) oldScript.remove();
+
+      if (data.success) {
+        statusDiv.innerText = "Redirecting to Google Calendar";
+        window.location.href = data.redirectUrl;
+      } else {
+        btn.disabled = false;
+        statusDiv.style.display = "none";
+        errorDiv.innerText = data.message || "Invalid User's Name or Enrollment Number.";
+      }
+    };
+
+    function processVerification() {
+      const name = document.getElementById("userName").value.trim();
+      const enrollment = document.getElementById("enrollmentNumber").value.trim();
+      const errorDiv = document.getElementById("errorMsg");
+      const statusDiv = document.getElementById("statusMsg");
+      const btn = document.getElementById("submitBtn");
+
+      errorDiv.innerText = "";
+      statusDiv.style.display = "block";
+      statusDiv.innerText = "Verifying credentials";
+      btn.disabled = true;
+
+      const oldScript = document.getElementById("jsonpScript");
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement("script");
+      script.id = "jsonpScript";
+      script.src = `${SCRIPT_URL}?userName=${encodeURIComponent(name)}&enrollmentNumber=${encodeURIComponent(enrollment)}&callback=handleResponse`;
+
+      script.onerror = function() {
+        btn.disabled = false;
+        statusDiv.style.display = "none";
+        errorDiv.innerText = "Error connecting to server. Please try again.";
+      };
+
+      document.body.appendChild(script);
+    }
+  </script>
 
 </body>
 </html>
-   
+     
+  
     
      
 
